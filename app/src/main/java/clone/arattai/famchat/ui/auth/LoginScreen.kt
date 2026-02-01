@@ -1,0 +1,76 @@
+package clone.arattai.famchat.ui.auth
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import clone.arattai.famchat.viewmodel.AuthViewModel
+import clone.arattai.famchat.viewmodel.UserState
+
+@Composable
+fun LoginScreen(
+    viewModel: AuthViewModel,
+    onNavigateToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    val userState by viewModel.userState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Welcome to FamChat", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { viewModel.login(email, password) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = userState !is UserState.Loading
+        ) {
+            if (userState is UserState.Loading) {
+                CircularProgressIndicator(size = 24.dp, color = MaterialTheme.colorScheme.onPrimary)
+            } else {
+                Text("Login")
+            }
+        }
+
+        TextButton(onClick = onNavigateToRegister) {
+            Text("Don't have an account? Register")
+        }
+
+        if (userState is UserState.Error) {
+            Text((userState as UserState.Error).message, color = MaterialTheme.colorScheme.error)
+        }
+
+        LaunchedEffect(userState) {
+            if (userState is UserState.Success) {
+                onLoginSuccess()
+            }
+        }
+    }
+}
